@@ -5,7 +5,7 @@ public class Casual extends Customer {
 	Casual(String type, String name) {
 		this.type = type;
 		this.name = name;
-		this.rentalDaysLeft = 2;
+		this.rentalDaysPerCustomer = 2;
 	}
 
 }

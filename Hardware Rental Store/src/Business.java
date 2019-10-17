@@ -5,6 +5,6 @@ public class Business extends Customer{
 	Business(String type, String name) {
 		this.type = type;
 		this.name = name;
-		this.rentalDaysLeft = 3;
+		this.rentalDaysPerCustomer = 3;
 	}
 }

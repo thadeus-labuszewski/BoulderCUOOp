@@ -71,7 +71,7 @@ public class CustomerFactory {
 	public String toString(){
 		String str = "In the customer list : ";
 		for(Customer customer: ListOfCustomers){
-			str += "( " + customer.getType() + ", " + customer.getName() + ", "+ customer.getRentalDaysLeft() + " )";
+			str += "( " + customer.getType() + ", " + customer.getName() + ", "+ customer.getRentalDaysPerCustomer() + " )";
 		}
 		return str;
 	}

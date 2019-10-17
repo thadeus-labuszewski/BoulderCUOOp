@@ -48,83 +48,113 @@ public class Store {
 		System.out.println("Number of tools currently in our store: "+ toolList.size());
 		System.out.println(toolToString());
 
-		// Loop through list of customers and pick one based off a random int
+		// Loop through list of customers and pick them based off a random int
 		for(Customer customer: customerList){
 			int randomInt = getRandomInt(2);
 			int toolListLength = toolList.size();
-			int rentalDaysLeftPerCustomer = customer.getRentalDaysLeft();
+			int rentalDaysLeftPerCustomer = customer.getRentalDaysPerCustomer();
 			String customerType = customer.getType();
-
 
 			if(randomInt != 0){
 				System.out.println(customerInStoreToString(customer));
-
 				// Business customer case
 				if(customerType.equals("business") && toolListLength >=3){
-					//System.out.println("a BUSINESS customer came in and about to rent 3 tools");
-					// pick up three tools
-					// get first three things out of the tool list (do the remove option three times)
-					rentOneTool(customer, 7);
-					rentOneTool(customer, 7);
-					rentOneTool(customer, 7);
+					// Business customers rent always rent 3 tools for 7 days
+					for(int i = 0; i <= 2; i ++){
+						rentSingleTool(customer, 7);
+					}
 					
-				}else if(((rentalDaysLeftPerCustomer) >0) && (toolList.size()>0)){
+				}else if(((rentalDaysLeftPerCustomer) > 0) && (toolListLength > 0)){
+
 					if(customerType.equals("casual")){
-						// randomize daysRentedForUniqueTool
-						int daysRentedForUniqueTool = getRandomInt(3);
-						// randomize the number of tools wanted to rent
-						int m = getRandomInt(3);
-						int a = Math.min(Math.min(rentalDaysLeftPerCustomer, m), toolListLength);
-						for(int i=0; i< a; i++){
-							rentOneTool(customer, daysRentedForUniqueTool);
+
+						// Casual customer can rent 1-2 days
+						int daysRentedForUniqueCustomer = getRandomInt(2);
+						while (daysRentedForUniqueCustomer == 0){
+							daysRentedForUniqueCustomer = getRandomInt(2);
+						}
+
+						// Casual customer can rent 1-2 tools
+						int daysRentedForUniqueTool = getRandomInt(2);
+						while (daysRentedForUniqueTool == 0){
+							daysRentedForUniqueTool = getRandomInt(2);
+						}
+
+						// rentOneTool a random amount of times based on casual customer requirements
+						for(int i=0; i< daysRentedForUniqueCustomer; i++){
+							rentSingleTool(customer, daysRentedForUniqueTool);
 						}
 					}else if (customerType.equals("regular")){
-						// randomize days
-						int days = getRandomInt(6);
-						// randomize the number of tools wanted to rent
-						int m = getRandomInt(4);
-						int a = Math.min(Math.min(rentalDaysLeftPerCustomer, m), toolListLength);;
-						for(int i=0; i< m; i++){
-							rentOneTool(customer, days);
+
+						// Regular customers can rent 3-5 days
+						int daysRentedForUniqueCustomer = getRandomInt(5);
+						while (daysRentedForUniqueCustomer <=2){
+							daysRentedForUniqueCustomer = getRandomInt(5);
+						}
+						// Regular customers can rent 1-3 tools
+						int daysRentedForUniqueTool = getRandomInt(3);
+						while (daysRentedForUniqueTool == 0){
+							daysRentedForUniqueTool = getRandomInt(3);
+						}
+						// rentOneTool a random amount of times based on regular customer requirements
+						for(int i=0; i< daysRentedForUniqueCustomer; i++){
+							rentSingleTool(customer, daysRentedForUniqueTool);
 						}
 					}
 				}
 			}
-		} 
+		}
+		// Update our list of active rentals
+		updateRentalList();
+	}
 
-		// iterate the rental list to check the tools that need to be returned
-		Iterator<Rental> iter = currentRentalsList.iterator();
-		while (iter.hasNext()) {
-		    Rental rental = iter.next();
-		    if(rental.getRemainingDays() == 0){
-				rental.getCustomer().returnRental(); // customer does not need to know what tool they have rented or returned
-				// get the tool back to the list
-				toolList.add(rental.getTool());
-				// how to remove the current rental
-				iter.remove();
-				System.out.println(rental.getToolName() + " is returned by ["+ rental.getCustomerName()+"]");
+	// Update rental list after each day
+	public void updateRentalList(){
+		Iterator<Rental> rentalListIterator = currentRentalsList.iterator();
+		while (rentalListIterator.hasNext()) {
+			Rental currentRental = rentalListIterator.next();
+			// Check to see if we need to return a particular tool
+			if(currentRental.getRemainingDays() == 0){
+				// Return rental
+				currentRental.getCustomer().returnRental();
+				// Add tool back to the list
+				toolList.add(currentRental.getTool());
+				// Remove the currentRental from our iterator
+				rentalListIterator.remove();
+				System.out.println(customerRentToString(currentRental));
 			}else{
-				rental.deductOneDay();
+				// Subtract a day from tool rental if we still have days left
+				currentRental.deductOneDay();
 			}
 		}
 	}
 
-	public void rentOneTool(Customer customer, int days){
-		if(toolList.size() == 0) // prevent the randomization requires the positive number
-			return;
-		
-		customer.rent(1);
-		
-		// get a random tool from the available tool list
+	public Tool pickRandomToolFromAvailableList(int toolListLength){
 		Random rand = new Random();
-		int index = rand.nextInt(this.toolList.size());
+		int index = rand.nextInt(toolListLength);
 		Tool tool = toolList.remove(index);
-	
-		// add to rental record
-		double amount = tool.getPrice()*days;
-		this.profit += amount;
-		Rental newRental = new Rental(customer, tool, days, amount); // choose days to rent
-		System.out.println(customer.getName() + " [" +customer.getType() + "] rents out "+ tool.getName() + " for " + days + " days with $" + amount + " amount");
+		return tool;
+	}
+
+	public void rentSingleTool(Customer customer, int days){
+
+
+		int toolListLength = this.toolList.size();
+		// If we dont have any tools left then we cant rent anything out
+		if(toolListLength == 0){ return;}
+
+		// Call rent method
+		customer.rent(1);
+
+		// Get random currentTool
+		Tool currentTool = pickRandomToolFromAvailableList(toolListLength);
+
+		// Calculate money related variables
+		double totalCost = currentTool.getPrice()*days;
+		this.profit += totalCost;
+		// Create a new rental record
+		Rental newRental = new Rental(customer, currentTool, days, totalCost);
+		System.out.println(rentalRecordCreationToString(customer, currentTool, days, totalCost));
 		currentRentalsList.add(newRental);
 		completedRentalList.add(newRental);
 	}
@@ -134,21 +164,30 @@ public class Store {
 		for(Tool tool: toolList){
 			str += "[ " + tool.getName() + ", $"+ tool.getPrice() + " ], ";
 		}
-		
 		return str;
 	}
-	
+
+	// Printing methods
 	public String customerToString(){
 		String str = "In the customer list : ";
 		for(Customer customer: customerList){
-			str += "( " + customer.getType() + ", " + customer.getName() + ", "+ customer.getRentalDaysLeft() + " )";
+			str += "( " + customer.getType() + ", " + customer.getName() + ", "+ customer.getRentalDaysPerCustomer() + " )";
 		}
-		
 		return str;
 	}
 
 	public String customerInStoreToString(Customer customer){
 		String str = customer.getName()+ " [" +customer.getType() + "] walks into our the store...";
+		return str;
+	}
+
+	public String customerRentToString(Rental rental){
+		String str =rental.getCustomerName()+ " [" +rental.getCustomerType() + "]" + "  returns " + rental.getToolName();
+		return str;
+	}
+
+	public String rentalRecordCreationToString(Customer customer, Tool currentTool, int days, double totalCost){
+		String str = customer.getName() + " [" +customer.getType() + "] rents out "+ currentTool.getName() + " for " + days + " days with $" + totalCost + " totalCost";
 		return str;
 	}
 	
@@ -157,7 +196,6 @@ public class Store {
 		for(Rental rental: currentRentalsList){
 			str += "( " + rental.getCustomerName() + " rented " + rental.getToolName() + " for "+ rental.getRemainingDays() + " days with amount $"+rental.getToolPrice()+" )\n";
 		}
-		
 		return str;
 	}
 	
@@ -166,7 +204,6 @@ public class Store {
 		for(Rental rental: completedRentalList){
 			str += "( " + rental.getCustomerName() + " rented " + rental.getToolName() + " for "+ rental.getInitialDays() + " days with amount $"+rental.getToolPrice()+" )\n";
 		}
-		
 		return str;
 	}
 }

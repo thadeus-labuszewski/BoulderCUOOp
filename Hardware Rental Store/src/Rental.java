@@ -43,4 +43,5 @@ public class Rental {
 	public Double getToolPrice(){
 		return this.toolPrice;
 	} // Return cost of tool
+	public String getCustomerType(){ return this.customer.getType(); } // Return customer type
 }
